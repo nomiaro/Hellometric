@@ -34,7 +34,7 @@ spec:
       - name: metric-app
         # Replace $LOCATION with your Artifact Registry location (e.g., us-west1).
         # Replace $GCLOUD_PROJECT with your project ID.
-        image: asia-east1-docker.pkg.dev/trainer-lab/hello-repo/hellometric:latest
+        image: us-central1-docker.pkg.dev/final-project-352014/hello-repo/hellometric:latest
         # This app listens on port 8080 for web traffic by default.
         ports:
         - containerPort: 8080

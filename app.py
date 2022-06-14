@@ -1,27 +1,14 @@
-# Copyright 2021 Google LLC
-
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-
-#     https://www.apache.org/licenses/LICENSE-2.0
-
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-# [START monitoring_sli_metrics_prometheus_setup]
 import random
 import time
 
-from flask import Flask
+from flask import Flask, request
 
 from prometheus_client import (
     Counter,
     generate_latest,
     Histogram,
     REGISTRY,
+    Gauge,
 )
 
 # [END monitoring_sli_metrics_prometheus_setup]
@@ -33,9 +20,15 @@ PYTHON_FAILED_REQUESTS_COUNTER = Counter("python_failed_requests", "failed reque
 PYTHON_LATENCIES_HISTOGRAM = Histogram(
     "python_request_latency", "request latency by path"
 )
+PYTHON_PARAMETER_TFACTOR = Gauge("python_tfactor", "tfactor", labelnames=['steak_type'])
+PYTHON_PARAMETER_MFACTOR = Gauge("python_mfactor", "mfactor", labelnames=['steak_type'])
+PYTHON_PARAMETER_THICKNESS = Gauge("python_thickness", "thickness", labelnames=['steak_type'])
+PYTHON_PARAMETER_MOISTURE = Gauge("python_moisture", "moisture", labelnames=['steak_type'])
+PYTHON_PARAMETER_TEMPERATURE = Gauge("python_temperature", "temperature", labelnames=['steak_type'])
 # [END monitoring_sli_metrics_prometheus_create_metrics]
 
-
+REQUESTS_COUNTER2 = Counter('receive_requests', 'receive_requests', labelnames=['path', 'response_code','factor'])
+REQUESTS_COUNTER3 =Counter('complete_requests', 'complete', labelnames=['path', 'response_code','tFactor','thickness','mFactor','moisture','temperature','id','type'])
 @app.route("/")
 # [START monitoring_sli_metrics_prometheus_latency]
 @PYTHON_LATENCIES_HISTOGRAM.time()
@@ -61,9 +54,35 @@ def homePage():
 def stats():
     return generate_latest(REGISTRY), 200
 
+@app.route("/thickness", methods=["GET"])
+def index():
+    factor = request.headers.get('factor')
+    REQUESTS_COUNTER2.labels('/thickness', 200,factor).inc()
+    return "ok"
+@app.route("/moisture", methods=["GET"])
+def index2():
+    factor = request.headers.get('factor')
+    REQUESTS_COUNTER2.labels('/moisture', 200,factor).inc()
+    return "ok"
+@app.route("/completed", methods=["GET"])
+def index3():
+    tFactor = request.headers.get('tFactor')
+    mFactor = request.headers.get('mFactor')
+    thickness = request.headers.get('thickness')
+    moisture = request.headers.get('moisture')
+    temperature = request.headers.get('temperature')
+    type = request.headers.get('type')
+    PYTHON_PARAMETER_TFACTOR.labels(type).set(float(tFactor))
+    PYTHON_PARAMETER_MFACTOR.labels(type).set(float(mFactor))
+    PYTHON_PARAMETER_THICKNESS.labels(type).set(float(thickness))
+    PYTHON_PARAMETER_MOISTURE.labels(type).set(float(moisture))
+    PYTHON_PARAMETER_TEMPERATURE.labels(type).set(float(temperature))
+    id = request.headers.get('id')
+    REQUESTS_COUNTER3.labels('/completed', 200,tFactor,thickness,mFactor,moisture,temperature,id,type).inc()
+    return "ok"
 
 # [END monitoring_sli_metrics_prometheus_metrics_endpoint]
 
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=8080)
+    app.run(debug=True, host="34.72.100.211", port=8080)
